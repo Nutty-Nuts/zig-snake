@@ -53,4 +53,4 @@ pub const Entity = struct {
     }
 };
 
-pub const StaticEntity = struct { char: u8, x: usize, y: usize };
+// pub const StaticEntity = struct { char: u8, x: usize, y: usize };

@@ -21,9 +21,10 @@ pub const ns_per_us: u64 = 1000;
 pub const ns_per_ms: u64 = 1000 * ns_per_us;
 pub const ns_per_s: u64 = 1000 * ns_per_ms;
 
-pub const fps: u32 = 12;
+pub const fps: u32 = 2;
 
 pub const game_height: u32 = 8;
 pub const game_width: u32 = 16;
 
 pub const blank: u8 = ' ';
+pub const debug: bool = true;

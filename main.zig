@@ -33,6 +33,46 @@ fn init_term() !void {
     try init_term_size();
 }
 
+var collision: [_constants.game_height][_constants.game_width]usize = undefined;
+
+fn init_collision() !void {
+    for (&collision) |*row| {
+        for (row) |*elem| {
+            elem.* = 0;
+        }
+    }
+}
+
+fn clear_collision() !void {
+    for (&collision) |*row| {
+        for (row) |*elem| {
+            elem.* = 0;
+        }
+    }
+}
+
+fn put_entity(x: usize, y: usize) !void {
+    collision[y][x] += 1;
+}
+
+fn check_collision_debug() !void {
+    var x: usize = 0;
+    var y: usize = 0;
+    for (collision) |row| {
+        y = 0;
+        for (row) |elem| {
+            if (elem == 1) {
+                std.debug.print("entity detected at x:{}, y:{}\n", .{ x, y });
+            }
+            if (elem > 1) {
+                std.debug.print("collision detected at x:{}, y:{}\n", .{ x, y });
+            }
+            y += 1;
+        }
+        x += 1;
+    }
+}
+
 pub fn main() !void {
     try init_term();
     try _render.init_frame();
@@ -54,12 +94,27 @@ pub fn main() !void {
     var timer: usize = 64;
 
     var h_moving_particle: _data.Entity = .{ .char = '@', .x = 0, .y = 0, .x_velocity = 1, .y_velocity = 0 };
-    var v_moving_particle: _data.Entity = .{ .char = '@', .x = 0, .y = 0, .x_velocity = 0, .y_velocity = 1 };
-    const static_particle: _data.StaticEntity = .{ .char = 'O', .x = 4, .y = 4 };
+    var v_moving_particle: _data.Entity = .{ .char = '@', .x = 4, .y = 0, .x_velocity = 0, .y_velocity = 1 };
+    var static_particle: _data.Entity = .{ .char = 'O', .x = 4, .y = 4, .x_velocity = 0, .y_velocity = 0 };
 
-    while (timer > 0) : (timer = timer - 1) {
+    const allocator = std.heap.page_allocator;
+    var list = std.ArrayList(*_data.Entity).init(allocator);
+
+    try list.append(&static_particle);
+    try list.append(&h_moving_particle);
+    try list.append(&v_moving_particle);
+
+    try init_collision();
+
+    var frames: u32 = 0;
+
+    while (timer > 0) : ({
+        timer = timer - 1;
+        frames = frames + 1;
+    }) {
         try _ansi.refresh_screen();
         try _render.clear_frame();
+        try clear_collision();
 
         if (timer == 56) {
             h_moving_particle.flip_velocity_x();
@@ -75,44 +130,28 @@ pub fn main() !void {
         h_moving_particle.move();
         v_moving_particle.move();
 
-        try _render.put_pixel(h_moving_particle.char, @intCast(h_moving_particle.x), @intCast(h_moving_particle.y));
-        try _render.put_pixel(v_moving_particle.char, @intCast(v_moving_particle.x), @intCast(v_moving_particle.y));
-        try _render.put_pixel(static_particle.char, static_particle.x, static_particle.y);
+        for (list.items) |item| {
+            try _render.put_pixel(item.*.char, @intCast(item.*.x), @intCast(item.*.y));
+            try put_entity(@intCast(item.*.x), @intCast(item.*.y));
+        }
 
         try _render.render_frame();
+
+        if (_constants.debug) {
+            std.debug.print("[frames]\n", .{});
+            std.debug.print("{}\n\n", .{frames});
+
+            std.debug.print("[entities]\n", .{});
+            for (list.items) |item| {
+                std.debug.print("{any}\n", .{item});
+            }
+
+            std.debug.print("\n[collisions]\n", .{});
+            try check_collision_debug();
+        }
+
         try _render.render_delay();
     }
-    //     var particle_a: _data.Entity = .{ .char = '@', .x = 0, .y = 0 };
-    //     var particle_b: _data.Entity = .{ .char = '@', .x = 0, .y = 7 };
-
-    //     var timer: u32 = 32;
-
-    //     while (timer > 0) : (timer = timer - 1) {
-    //         try _ansi.refresh_screen();
-
-    //         if (particle_a.x < 7) {
-    //             particle_a.x = particle_a.x + 1;
-    //         }
-    //         if (particle_b.x > 0) {
-    //             particle_b.x = particle_b.x - 1;
-    //         }
-
-    //         if (particle_a.y < 7) {
-    //             particle_a.y = particle_a.y + 1;
-    //         }
-    //         if (particle_b.y > 0) {
-    //             particle_b.y = particle_b.y - 1;
-    //         }
-
-    //         try _render.clear_frame();
-
-    //         try _render.put_pixel(particle_a.char, particle_a.x, particle_a.y);
-    //         try _render.put_pixel(particle_b.char, particle_b.x, particle_b.y);
-
-    //         try _render.render_frame();
-    //         try _render.render_delay();
-    //     }
-
     try _ansi.end_screen_buf();
     try _ansi.show_cursor();
 }
