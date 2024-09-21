@@ -38,6 +38,21 @@ fn init_term() !void {
     try ansi.hide_cursor();
 }
 
+fn debug(frames: u32, list: std.ArrayListAligned(*data.Entity, null)) !void {
+    if (constants.debug) {
+        std.debug.print("[frames]\n", .{});
+        std.debug.print("{}\n\n", .{frames});
+
+        std.debug.print("[entities]\n", .{});
+        for (list.items) |item| {
+            std.debug.print("{any}\n", .{item});
+        }
+
+        std.debug.print("\n[collisions]\n", .{});
+        collision.debug();
+    }
+}
+
 pub fn main() !void {
     try init_term();
     renderer.init_frame();
@@ -73,6 +88,7 @@ pub fn main() !void {
     while (timer > 0) : ({
         timer = timer - 1;
         frames = frames + 1;
+        try debug(frames, list);
     }) {
         try ansi.refresh_screen();
         renderer.clear_frame();
@@ -93,26 +109,10 @@ pub fn main() !void {
         v_moving_particle.move();
 
         for (list.items) |item| {
-            renderer.put_pixel(item.*.char, @intCast(item.*.x), @intCast(item.*.y));
             collision.put_entity(@intCast(item.*.x), @intCast(item.*.y));
         }
 
-        renderer.render_frame();
-
-        if (constants.debug) {
-            std.debug.print("[frames]\n", .{});
-            std.debug.print("{}\n\n", .{frames});
-
-            std.debug.print("[entities]\n", .{});
-            for (list.items) |item| {
-                std.debug.print("{any}\n", .{item});
-            }
-
-            std.debug.print("\n[collisions]\n", .{});
-            collision.debug();
-        }
-
-        renderer.render_delay();
+        renderer.render(list);
     }
     try ansi.end_screen_buf();
     try ansi.show_cursor();

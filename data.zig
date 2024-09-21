@@ -80,6 +80,13 @@ pub const Renderer = struct {
         _ = self;
         std.time.sleep((1 * constants.ns_per_s) / constants.fps);
     }
+    pub fn render(self: *Renderer, queue: std.ArrayListAligned(*Entity, null)) void {
+        for (queue.items) |item| {
+            self.put_pixel(item.char, @intCast(item.x), @intCast(item.y));
+        }
+        self.render_frame();
+        self.render_delay();
+    }
     pub fn put_pixel(self: *Renderer, char: u8, x: usize, y: usize) void {
         self.frame[y][x] = char;
     }
@@ -132,4 +139,11 @@ pub const Entity = struct {
         self.x = x;
         self.y = y;
     }
+};
+
+pub const EntityQueue = struct {
+    queue: std.ArrayListAligned(*Entity, null),
+    pub fn add_entity() void {}
+    pub fn remove_entity() void {}
+    pub fn clear() void {}
 };
