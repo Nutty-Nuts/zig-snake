@@ -6,6 +6,7 @@ const data = @import("data.zig");
 const ansi = @import("ansi.zig");
 
 const allocator = std.heap.page_allocator;
+const initer = 0;
 
 var stdout: std.fs.File.Writer = undefined;
 var stdin: std.fs.File.Reader = undefined;
