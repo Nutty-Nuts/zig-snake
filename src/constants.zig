@@ -11,6 +11,7 @@ pub const screen_buf_off = csi ++ "?1049l";
 
 pub const nl = "\n";
 pub const sep = "▏";
+pub const blank = " ";
 
 pub const ns_per_us: u64 = 1000;
 pub const ns_per_ms: u64 = 1000 * ns_per_us;
